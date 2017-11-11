@@ -3,8 +3,12 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.Application.index
-GET     /chunkHandle                           controllers.Application.chunkHandle(filename: String, chunkIndex: String)
+GET     /                                  controllers.Application.index
+GET     /master/chunkHandle                controllers.Master.chunkHandle(filename: String, chunkIndex: String)
+GET     /master/createFile                 controllers.Master.createFile(filename: String)
+
+#chunkserver
+GET     /chunkServer/poll                   controllers.ChunkServer.poll()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
