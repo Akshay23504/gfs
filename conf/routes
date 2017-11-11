@@ -8,7 +8,7 @@ GET     /                                  controllers.Application.index
 # Master
 GET     /master/chunkHandle                controllers.Master.chunkHandle(filename: String, chunkIndex: String)
 GET     /master/createFile                 controllers.Master.createFile(filename: String)
-GET     /master/registerChunkServer        controllers.Master.registerChunkServer(ip: String, port: String)
+GET     /master/registerChunkServer        controllers.Master.registerChunkServer(IP: String, port: String)
 
 # ChunkServer
 GET     /chunkServer/poll                   controllers.ChunkServer.poll()

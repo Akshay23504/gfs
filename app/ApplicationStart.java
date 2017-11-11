@@ -11,10 +11,6 @@ public class ApplicationStart {
     @Inject
     public ApplicationStart(ApplicationLifecycle lifecycle, Environment environment) {
         System.out.println("Registering with master");
-        // Shut-down hook
-        lifecycle.addStopHook( () -> {
-            return CompletableFuture.completedFuture(null);
-        } );
-        // ...
+        lifecycle.addStopHook( () -> CompletableFuture.completedFuture(null));
     }
 }

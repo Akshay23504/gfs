@@ -13,7 +13,7 @@ public class Master extends Controller {
         return (ok("File to create: " + filename));
     }
 
-    public Result registerChunkServer(String ip, String port) {
+    public Result registerChunkServer(String IP, String port) {
         return ok();
     }
 }
