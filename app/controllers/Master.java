@@ -3,6 +3,8 @@ package controllers;
 import play.mvc.Controller;
 import play.mvc.Result;
 
+import java.util.UUID;
+
 public class Master extends Controller {
 
     public Result chunkHandle(String filename, String chunkIndex) {
@@ -10,6 +12,8 @@ public class Master extends Controller {
     }
 
     public Result createFile(String filename) {
+        //TODO: create first initial empty chunk
+        String uniqueID = UUID.randomUUID().toString();
         return (ok("File to create: " + filename));
     }
 

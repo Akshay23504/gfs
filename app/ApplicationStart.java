@@ -8,6 +8,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 
 // This creates an `ApplicationStart` object once at start-up.
 @Singleton
@@ -19,7 +20,14 @@ public class ApplicationStart {
         System.out.println("Registering with master");
         lifecycle.addStopHook( () -> CompletableFuture.completedFuture(null));
 
-        WSRequest request = wsClient.url("http://localhost:9000/createFile?filename=abc");
+        WSRequest request = wsClient.url("http://localhost:9000/master/registerChunkServer");
         CompletionStage<String> responsePromise = request.get().thenApply(WSResponse::getBody);
+        try {
+            System.out.print(responsePromise.toCompletableFuture().get());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
     }
 }
