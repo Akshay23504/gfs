@@ -4,10 +4,13 @@
 
 # Home page
 GET     /                                  controllers.Application.index
+
+# Master
 GET     /master/chunkHandle                controllers.Master.chunkHandle(filename: String, chunkIndex: String)
 GET     /master/createFile                 controllers.Master.createFile(filename: String)
+GET     /master/registerChunkServer        controllers.Master.registerChunkServer(ip: String, port: String)
 
-#chunkserver
+# ChunkServer
 GET     /chunkServer/poll                   controllers.ChunkServer.poll()
 
 # Map static resources from the /public folder to the /assets URL path

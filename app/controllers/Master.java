@@ -12,4 +12,8 @@ public class Master extends Controller {
     public Result createFile(String filename) {
         return (ok("File to create: " + filename));
     }
+
+    public Result registerChunkServer(String ip, String port) {
+        return ok();
+    }
 }
