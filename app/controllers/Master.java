@@ -10,10 +10,11 @@ public class Master extends Controller {
     }
 
     public Result createFile(String filename) {
+        System.out.println(System.getProperty("http.port"));
         return (ok("File to create: " + filename));
     }
 
-    public Result registerChunkServer(String IP, String port) {
+    public Result registerChunkServer(String ip, String port) {
         return ok();
     }
 }
