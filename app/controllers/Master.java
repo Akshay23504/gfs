@@ -1,36 +1,30 @@
 package controllers;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import play.libs.Json;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSRequest;
-import play.libs.ws.WSResponse;
 import play.mvc.Controller;
 import play.mvc.Result;
 
 import javax.inject.Inject;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 public class Master extends Controller {
 
-    @Inject private WSClient wsClient;
-    @Inject private ObjectMapper mapper;
+    private final WSClient wsClient;
+    private final ObjectMapper mapper;
     private ObjectNode metadata = Json.newObject();
     private ArrayNode arrayNode;
 
     @Inject
-    public Master(ObjectMapper objectMapper, WSClient wsClient) {
+    public Master(ObjectMapper objectMapper, WSClient wsClient, ObjectMapper mapper) {
         this.wsClient = wsClient;
         this.mapper = objectMapper;
         arrayNode = mapper.createArrayNode();
-        metadata.set("chunkservers", arrayNode);
+        metadata.set("chunkServers", arrayNode);
     }
 
     public Result chunkHandle(String filename, String chunkIndex) {
@@ -47,16 +41,16 @@ public class Master extends Controller {
 
     public Result registerChunkServer(String ip, String port) {
         ArrayNode temp = mapper.createArrayNode();
-        ObjectNode chunkserver = Json.newObject();
-        chunkserver.put("address", ip + ":" + port);
-        temp.add(chunkserver);
+        ObjectNode chunkServer = Json.newObject();
+        chunkServer.put("address", ip + ":" + port);
+        temp.add(chunkServer);
 
         arrayNode.add(temp);
         return ok(metadata);
     }
 
     public Result triggerPolling() {
-        ArrayNode arrayNode = (ArrayNode) metadata.get("chunkservers");
+        ArrayNode arrayNode = (ArrayNode) metadata.get("chunkServers");
         arrayNode.forEach(x -> {
             System.out.println(x.get(0).get("address").asText());
             WSRequest request = wsClient.url("http://" + x.get(0).get("address").asText() + "/chunkServer/poll");

@@ -1,23 +1,24 @@
 package controllers;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import play.api.Play;
+import play.Environment;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 
+import javax.inject.Inject;
 import java.io.File;
-
-import javax.inject.*;
-import play.libs.ws.*;
-import play.Environment;
 
 public class ChunkServer extends Controller {
 
-    @Inject Environment environment;
+    private final Environment environment;
+
+    @Inject
+    public ChunkServer(Environment environment) {
+        this.environment = environment;
+    }
 
     public Result poll() {
         //TODO: read in all chunks
@@ -30,7 +31,7 @@ public class ChunkServer extends Controller {
         ArrayNode arrayNode = mapper.createArrayNode();
         ObjectNode result = Json.newObject();
 
-        for (int i = 0; i < listOfFiles.length; i++) {
+        for (int i = 0; i < (listOfFiles != null ? listOfFiles.length : 0); i++) {
             if (listOfFiles[i].isFile()) {
                 arrayNode.add(listOfFiles[i].getName());
                 System.out.println("File " + listOfFiles[i].getName());
@@ -39,8 +40,6 @@ public class ChunkServer extends Controller {
             }
         }
         result.set("chunks", arrayNode);
-        System.out.println("Came here....");
-
         return ok(result);
     }
 }
