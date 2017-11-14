@@ -24,6 +24,7 @@ public class ChunkServer extends Controller {
         //TODO: read in all chunks
         //TODO: create list of the unique ids of all chunks
         //TODO: return the list of the chunk unique ids
+        //TODO: Maybe create a model when we have time
 
         File folder = new File(environment.rootPath() + "/chunks");
         File[] listOfFiles = folder.listFiles();

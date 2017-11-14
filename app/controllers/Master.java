@@ -1,8 +1,11 @@
 package controllers;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import models.ChunkMetadata;
+import models.ChunkServer;
 import play.libs.Json;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSRequest;
@@ -10,21 +13,23 @@ import play.mvc.Controller;
 import play.mvc.Result;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class Master extends Controller {
 
     private final WSClient wsClient;
     private final ObjectMapper mapper;
-    private ObjectNode metadata = Json.newObject();
     private ArrayNode arrayNode;
+    private List<ChunkServer> chunkServerList;
 
     @Inject
     public Master(ObjectMapper objectMapper, WSClient wsClient, ObjectMapper mapper) {
         this.wsClient = wsClient;
         this.mapper = objectMapper;
         arrayNode = mapper.createArrayNode();
-        metadata.set("chunkServers", arrayNode);
+        chunkServerList = new ArrayList<>();
     }
 
     public Result chunkHandle(String filename, String chunkIndex) {
@@ -40,28 +45,27 @@ public class Master extends Controller {
     }
 
     public Result registerChunkServer(String ip, String port) {
-        ArrayNode temp = mapper.createArrayNode();
-        ObjectNode chunkServer = Json.newObject();
-        chunkServer.put("address", ip + ":" + port);
-        temp.add(chunkServer);
+        chunkServerList.add(new ChunkServer(ip, port));
+        return ok();
+    }
 
-        arrayNode.add(temp);
+    public Result getChunkServers() {
+        ObjectNode metadata = Json.newObject();
+        arrayNode = metadata.putArray("chunkServers");
+        arrayNode.add(mapper.valueToTree(chunkServerList));
         return ok(metadata);
     }
 
     public Result triggerPolling() {
-        ArrayNode arrayNode = (ArrayNode) metadata.get("chunkServers");
-        arrayNode.forEach(x -> {
-            System.out.println(x.get(0).get("address").asText());
-            WSRequest request = wsClient.url("http://" + x.get(0).get("address").asText() + "/chunkServer/poll");
-            request.get().thenApply(y -> {
-                ArrayNode s = (ArrayNode) x;
-                System.out.println(y.asJson());
-                s.add(y.asJson());
-                return y.asJson();
+        chunkServerList.forEach(chunkServer -> {
+            WSRequest request = wsClient.url("http://" + chunkServer.getAddress() + "/chunkServer/poll");
+            request.get().thenApply(x -> {
+                x.asJson().get("chunks")
+                        .forEach(id -> chunkServer.addChunkServerMetadata(new ChunkMetadata(id.asText())));
+                return x.asJson();
             });
         });
-        return ok(metadata);
+        return ok();
     }
 }
 
