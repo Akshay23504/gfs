@@ -2,17 +2,24 @@ package models;
 
 public class ChunkMetadata {
 
-    private String id;
+    private String uuid;
+    private String address;
 
-    public ChunkMetadata(String id) {
-        this.id = id;
+    public ChunkMetadata(String uuid) {
+        this.uuid = uuid;
     }
 
     public String getId() {
-        return id;
+        return uuid;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setId(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public void setAddress(String address) { this.address = address;}
+
+    public String getAddress() {
+        return this.address;
     }
 }
