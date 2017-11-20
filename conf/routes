@@ -7,13 +7,19 @@ GET     /                                  controllers.Application.index
 
 # Master
 GET     /master/chunkHandle                controllers.Master.chunkHandle(filename: String, chunkIndex: String)
-GET     /master/createFile                 controllers.Master.createFile(filename: String)
+GET     /master/createFile                 controllers.Master.createFile(filename: String, size: String)
 GET     /master/registerChunkServer        controllers.Master.registerChunkServer(ip: String, port: String)
 GET     /master/triggerPolling             controllers.Master.triggerPolling()
+
 GET     /master/getChunkServers            controllers.Master.getChunkServers()
+GET     /master/getChunkHandlesForFile            controllers.Master.getChunkHandlesForFile(filename: String)
 
 # ChunkServer
+
 GET     /chunkServer/poll                   controllers.ChunkServer.poll()
+
+GET     /chunkServer/readChunk                   controllers.ChunkServer.readChunk(uuid: String)
+GET     /chunkServer/writeChunk                   controllers.ChunkServer.writeChunk(uuid: String)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
