@@ -13,9 +13,11 @@ import play.mvc.Controller;
 import play.mvc.Result;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class Master extends Controller {
 
@@ -36,11 +38,12 @@ public class Master extends Controller {
         return ok(new java.io.File("/build.sbt"));
     }
 
-    public Result createFile(String filename) {
+    public Result createFile(String filename) throws IOException {
         System.out.println(System.getProperty("http.port"));
 
         //TODO: create first initial empty chunk
         String uniqueID = UUID.randomUUID().toString();
+        //System.out.println(Runtime.getRuntime().exec("ls"));
         return (ok("File to create: " + filename));
     }
 
@@ -54,6 +57,23 @@ public class Master extends Controller {
         arrayNode = metadata.putArray("chunkServers");
         arrayNode.add(mapper.valueToTree(chunkServerList));
         return ok(metadata);
+    }
+
+    public Result getChunkServer(String ip, String port) {
+        return ok((JsonNode) mapper.valueToTree(chunkServerList
+                .stream()
+                .filter(x -> x.getIp().equals(ip) && x.getPort().equals(port))
+                .distinct().collect(Collectors.toList()))
+        );
+    }
+
+    public Result chunkServerDead(String ip, String port) {
+        chunkServerList
+                .stream()
+                .filter(x -> x.getIp().equals(ip) && x.getPort().equals(port))
+                .distinct() // TODO Ideally this should always be distinct and hence we remove the distinct clause
+                .forEach(x -> x.setStatus(ChunkServer.ChunkServerStatus.DEAD));
+        return ok();
     }
 
     public Result triggerPolling() {

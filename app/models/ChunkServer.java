@@ -5,7 +5,7 @@ import java.util.List;
 
 public class ChunkServer {
 
-    private enum ChunkServerStatus {RUNNING, DEAD}
+    public enum ChunkServerStatus {RUNNING, DEAD}
 
     private List<ChunkMetadata> chunkMetadataList;
     private String ip;
