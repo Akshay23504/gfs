@@ -3,32 +3,28 @@ package controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import play.Environment;
+import play.Logger;
 import play.libs.Json;
-import play.libs.ws.WSClient;
 import play.mvc.Controller;
+import play.mvc.Http;
 import play.mvc.Result;
 
 import javax.inject.Inject;
-import java.io.*;
-
-import java.nio.file.FileSystems;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
 public class ChunkServer extends Controller {
 
-    private final Environment environment;
+    private final services.ChunkServer chunkServer;
 
     @Inject
-    public ChunkServer(Environment environment) {
-        this.environment = environment;
-    }
-
-    public String getChunksPath() {
-        return environment.rootPath() + "/chunks" +  System.getProperty("http.port") + "/";
+    public ChunkServer(services.ChunkServer chunkServer) {
+        this.chunkServer = chunkServer;
     }
 
     public Result poll() {
@@ -37,7 +33,7 @@ public class ChunkServer extends Controller {
         //TODO: return the list of the chunk unique ids
         //TODO: Maybe create a model when we have time
 
-        File folder = new File(getChunksPath());
+        File folder = new File(chunkServer.getChunksPath());
         File[] listOfFiles = folder.listFiles();
         ObjectMapper mapper = new ObjectMapper();
         ArrayNode arrayNode = mapper.createArrayNode();
@@ -46,10 +42,8 @@ public class ChunkServer extends Controller {
         for (int i = 0; i < (listOfFiles != null ? listOfFiles.length : 0); i++) {
             if (listOfFiles[i].isFile()) {
                 arrayNode.add(listOfFiles[i].getName());
-                // TODO Remove print statement
-                System.out.println("File " + listOfFiles[i].getName());
             } else if (listOfFiles[i].isDirectory()) {
-                System.out.println("Directory " + listOfFiles[i].getName());
+                Logger.info("Directory " + listOfFiles[i].getName());
             }
         }
         result.set("chunks", arrayNode);
@@ -57,43 +51,44 @@ public class ChunkServer extends Controller {
     }
 
     public Result stop(String ip, String port) {
+        if (true) return ok();
         if (System.getProperty("http.port").equals(port)) {
-            return forbidden(); // Cannot stop chunkserver from the same chunkserver!
+            return forbidden(); // Cannot stop chunkServer from the same chunkServer!
         }
-        return redirect("localhost:9000/chunkServerDead?ip=" + ip + "&port=" + port);
+        return redirect("http://localhost:9000/chunkServerDead?ip=" + ip + "&port=" + port);
     }
 
-    public Result writeChunk(String uuid) {
-        DataOutputStream os = null;
+    public Result writeChunk() {
+        Http.MultipartFormData.FilePart<Object> filePartResponse = request().body().asMultipartFormData().getFile("content");
         try {
-            os = new DataOutputStream(new FileOutputStream(getChunksPath() + uuid));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        try {
-            os.writeInt(123);
+            byte[] content = Files.readAllBytes(Paths.get(((File) filePartResponse.getFile()).getPath()));
+            Logger.info(Arrays.toString(content));
         } catch (IOException e) {
             e.printStackTrace();
         }
+        // TODO Do we need DataOutputStream?
         try {
-            os.close();
+            BufferedWriter writer = new BufferedWriter(
+                    new FileWriter(chunkServer.getChunksPath() + filePartResponse.getFilename())
+            );
+            writer.write(123);
+            writer.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error(e.getMessage());
+            return internalServerError();
         }
         return ok();
-
     }
 
     public Result readChunk(String uuid) {
-        Path path = Paths.get(getChunksPath() + uuid);
-        byte[] data = new byte[64];
+        byte[] data;
         try {
-            data = Files.readAllBytes(path);
+            data = Files.readAllBytes(Paths.get(chunkServer.getChunksPath() + uuid));
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.error(e.getMessage());
+            return internalServerError();
         }
-        System.out.print(Arrays.toString(data));
-
+        Logger.info(Arrays.toString(data));
         return ok(data).as("application/octet-stream");
     }
 }

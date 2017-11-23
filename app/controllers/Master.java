@@ -7,19 +7,21 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import models.ChunkMetadata;
 import models.ChunkServer;
 import models.GFSFile;
-import models.GFSFileSystem;
+import play.Logger;
+import services.GFSFileSystem;
 import play.libs.Json;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSRequest;
 import play.mvc.Controller;
 import play.mvc.Result;
+import views.html.dashboard;
+import views.html.index;
 
 import javax.inject.Inject;
-import java.io.IOException;
-import javax.sound.midi.SysexMessage;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -29,7 +31,6 @@ public class Master extends Controller {
     private final ObjectMapper mapper;
     private ArrayNode arrayNode;
     private List<ChunkServer> chunkServerList;
-    private GFSFileSystem gfsFileSystem;
 
     @Inject
     public Master(ObjectMapper objectMapper, WSClient wsClient, ObjectMapper mapper) {
@@ -37,122 +38,63 @@ public class Master extends Controller {
         this.mapper = objectMapper;
         arrayNode = mapper.createArrayNode();
         chunkServerList = new ArrayList<>();
-        gfsFileSystem = new GFSFileSystem();
     }
 
-    public ChunkServer chooseChunkServerForChunk(ChunkMetadata chunk) {
-        return chunkServerList.get(0);
-    }
-
-    public void saveGFS(GFSFileSystem fileSystem) {
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream("gfs.ser");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        ObjectOutputStream oos = null;
-        try {
-            oos = new ObjectOutputStream(fos);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            oos.writeObject(gfsFileSystem);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            oos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public GFSFileSystem getGFS() {
-        FileInputStream fis = null;
-        try {
-            System.out.println("Retrieving GFSFileSystem from serialization");
-            fis = new FileInputStream("gfs.ser");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            saveGFS(new GFSFileSystem());
-            gfsFileSystem = getGFS();
-        }
-        ObjectInputStream ois = null;
-        try {
-            ois = new ObjectInputStream(fis);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            gfsFileSystem = (GFSFileSystem) ois.readObject();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        try {
-            ois.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return gfsFileSystem;
-    }
-
-
-
+    // TODO we don't need this now
     public Result chunkHandle(String filename, String chunkIndex) {
         return ok(new java.io.File("/build.sbt"));
     }
 
     public Result createFile(String filename, String size) {
-        Integer chunksNumber = (int) Math.ceil(Double.valueOf(size) / GFSFileSystem.chunkSizeBytes);
+        Integer chunkNumber = (int) Math.ceil(Double.valueOf(size) / GFSFileSystem.chunkSizeBytes);
         //TODO: create first initial empty chunk
         int counter = 0;
-        GFSFile file = new GFSFile(filename);
-        while(counter < chunksNumber) {
-            String uuid = UUID.randomUUID().toString();
-            file.addChunkMetadata(new ChunkMetadata(uuid));
-            counter++;
+        GFSFile gfsFile = new GFSFile(filename);
+        while(counter++ < chunkNumber) {
+            gfsFile.addChunkMetadata(new ChunkMetadata(UUID.randomUUID().toString()));
         }
-        gfsFileSystem.addFile(file);
+        try {
+            GFSFileSystem.addFile(gfsFile);
+        } catch (IOException e) {
+            Logger.error("File creation failed :( ");
+            return internalServerError(); // Should not happen
+        }
 
-        file.chunkMetadataList.forEach(x -> {
-            x.setAddress(chooseChunkServerForChunk(x).getAddress());
+        gfsFile.chunkMetadataList.forEach(x -> {
+            x.setAddress(chooseChunkServerForChunk().getAddress());
             WSRequest request = wsClient.url("http://" + x.getAddress() + "/chunkServer/writeChunk?uuid=" + x.getId());
             request.get().thenApply(response -> {
-                System.out.println(response.asJson().toString());
+                Logger.info(response.asJson().toString());
                 return response.asJson();
             });
         });
         return ok();
     }
 
+    private ChunkServer chooseChunkServerForChunk() {
+        return chunkServerList.get(new Random().nextInt(chunkServerList.size()));
+    }
+
     public Result getChunkHandlesForFile(String filename) {
         List<ChunkMetadata> chunkHandles = new ArrayList<>();
-        gfsFileSystem.getGFSfiles().forEach(file -> {
-        if (file.getName().equals(filename)){
-            System.out.println("Locating ChunkHandles for " + filename);
-            file.chunkMetadataList.forEach(fileChunk -> {
-                chunkServerList.forEach(server -> {
-                    server.getChunkMetadataList().forEach(serverChunk -> {
-                        System.out.println(serverChunk.getId());
-                        System.out.println(fileChunk.getId());
-                        if(serverChunk.getId().equals(fileChunk.getId())){
-                            ChunkMetadata chunkHandle = new ChunkMetadata(fileChunk.getId());
-                            chunkHandle.setAddress(server.getAddress());
-                            chunkHandles.add(chunkHandle);
-                        }
-                    });
-
+        GFSFileSystem.getFiles()
+                .stream()
+                .filter(file -> file.getName().equals(filename))
+                .forEach(file -> {
+                    Logger.info("Locating ChunkHandles for " + filename);
+                    file.chunkMetadataList
+                            .forEach(fileChunk -> chunkServerList
+                                    .forEach(server -> server.getChunkMetadataList()
+                                            .stream()
+                                            .filter(chunkServer -> chunkServer.getId().equals(fileChunk.getId()))
+                                            .forEach(serverChunk -> {
+                                                Logger.info(serverChunk.getId());
+                                                Logger.info(fileChunk.getId());
+                                                ChunkMetadata chunkHandle = new ChunkMetadata(fileChunk.getId());
+                                                chunkHandle.setAddress(server.getAddress());
+                                                chunkHandles.add(chunkHandle);
+                                            })));
                 });
-
-            });
-
-        }
-        });
         ObjectNode handles = Json.newObject();
         arrayNode = handles.putArray("chunkHandles");
         arrayNode.add(mapper.valueToTree(chunkHandles));
@@ -198,6 +140,10 @@ public class Master extends Controller {
             });
         });
         return ok();
+    }
+
+    public Result dashboard() {
+        return ok(dashboard.render());
     }
 }
 

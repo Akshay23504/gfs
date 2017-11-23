@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Google File System</title>
+        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/bootstrap.min.css")">
+        <link rel="shortcut icon" type="image/png" href="@routes.Assets.at("images/favicon.png")">
+        <script src="@routes.Assets.at("javascripts/jquery-1.9.0.min.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/bootstrap.min.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/gfs.js")" type="text/javascript"></script>
+    </head>
+    <body>
+        <div>
+            <nav class="navbar navbar-inverse bg-primary" style="height: 100px; padding-left: 50px">
+                <h2 style="color: #ffffff">
+                    <p></p>
+                    Google File System
+                    <p></p>
+                    <p style="font-size: 14px; color: #ffffff"><i>Developed by, <br/> Akshay Aravind and Jakob Zeitler</i></p>
+                </h2>
+            </nav>
+        </div>
+        <div style="padding-left: 50px; padding-right: 50px;">
+            <div class="container-fluid" style="padding-top: 5px;">
+                <div class="row">
+                    <h2 class="dashboardH2">Dashboard</h2>
+                </div>
+            </div>
+            <div class="card">
+                <h3 class="card-header">Master</h3>
+                <div class="card-block">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Address</th>
+                                <th>Graph</th>
+                                <th>Status</th>
+                                <th>ChunkServer</th>
+                            </tr>
+                        </thead>
+                        <tbody id="masterTableBody">
+                            <tr>
+                                <td>localhost:9000</td>
+                                <td></td>
+                                <td>RUNNING</td>
+                                <td><a href="#" class="btn btn-primary">New ChunkServer</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <br/><br/>
+            <div class="card">
+                <h3 class="card-header">ChunkServers</h3>
+                <div class="card-block">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Address</th>
+                                <th>Chunks</th>
+                                <th>Status</th>
+                                <th>Start / Stop</th>
+                            </tr>
+                        </thead>
+                        <tbody id="chunkServerTableBody">
+                            @*<tr>
+                                <th scope="row">1</th>
+                                <td>Mark</td>
+                                <td>Otto</td>
+                                <td></td>
+                            </tr>*@
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            getChunkServers();
+        </script>
+    </body>
+</html>
