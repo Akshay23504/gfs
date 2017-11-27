@@ -72,7 +72,11 @@ public class Master extends Controller {
     }
 
     private ChunkServer chooseChunkServerForChunk() {
-        return chunkServerList.get(new Random().nextInt(chunkServerList.size()));
+        List<ChunkServer> runningChunkServers = chunkServerList
+                .stream()
+                .filter(x -> x.getStatus().equals(ChunkServer.ChunkServerStatus.RUNNING))
+                .collect(Collectors.toList());
+        return runningChunkServers.get(new Random().nextInt(runningChunkServers.size()));
     }
 
     public Result getChunkHandlesForFile(String filename) {

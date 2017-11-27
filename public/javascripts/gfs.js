@@ -9,7 +9,7 @@ function getChunkServers() {
                     "<td scope='row'>" + value.ip + ":" + value.port + "</td>" +
                     "<td scope='row'>" + "chunks" + "</td>" +
                     "<td scope='row'>" + value.status + "</td>" +
-                    "<td scope='row'><a href='' id=" + value.port + " class='btn btn-danger startOrStopButton'>Stop</a></td>" +
+                    "<td scope='row'><a href='' id=" + value.port + " class='btn btn-danger'>Stop</a></td>" +
                 "</tr>"
             );
             $('#' + value.port).click(function(event) {
