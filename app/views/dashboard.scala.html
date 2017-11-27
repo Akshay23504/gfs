@@ -50,7 +50,11 @@
             </div>
             <br/><br/>
             <div class="card">
-                <h3 class="card-header">ChunkServers<a href="#" class="btn btn-primary float-right">New ChunkServer</a></h3>
+                <h3 class="card-header">ChunkServers
+                    <button onclick="newChunkServer()" class="btn btn-primary float-right">New ChunkServer</button>
+                </h3>
+                <p class="text-success text-right" id="newChunkServerSuccessText">New ChunkServer created</p>
+                <p class="text-danger text-right" id="newChunkServerFailedText">New ChunkServer creation failed</p>
                 <div class="card-block">
                     <table class="table table-striped">
                         <thead>
@@ -61,20 +65,15 @@
                                 <th>Start / Stop</th>
                             </tr>
                         </thead>
-                        <tbody id="chunkServerTableBody">
-                            @*<tr>
-                                <th scope="row">1</th>
-                                <td>Mark</td>
-                                <td>Otto</td>
-                                <td></td>
-                            </tr>*@
-                        </tbody>
+                        <tbody id="chunkServerTableBody"> </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
         <script>
+            $("#newChunkServerSuccessText").hide();
+            $("#newChunkServerFailedText").hide();
             getChunkServers();
         </script>
     </body>

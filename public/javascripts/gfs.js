@@ -23,3 +23,17 @@ function getChunkServers() {
 }
 
 setInterval(getChunkServers, 10000);
+
+function newChunkServer() {
+    $.get("/master/registerNewChunkServer", function(data) {
+      // Nothing here
+        console.log(data);
+    }).done(function() {
+        $("#newChunkServerFailedText").hide();
+        $("#newChunkServerSuccessText").show();
+        getChunkServers();
+    }).fail(function() {
+        $("#newChunkServerSuccessText").hide();
+        $("#newChunkServerFailedText").show();
+    });
+}

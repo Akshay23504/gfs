@@ -8,17 +8,16 @@ import models.ChunkMetadata;
 import models.ChunkServer;
 import models.GFSFile;
 import play.Logger;
-import services.GFSFileSystem;
 import play.libs.Json;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSRequest;
 import play.mvc.Controller;
 import play.mvc.Result;
+import services.GFSFileSystem;
 import views.html.dashboard;
-import views.html.index;
 
 import javax.inject.Inject;
-import java.io.*;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -63,6 +62,7 @@ public class Master extends Controller {
         gfsFile.chunkMetadataList.forEach(x -> {
             x.setAddress(chooseChunkServerForChunk().getAddress());
             WSRequest request = wsClient.url("http://" + x.getAddress() + "/chunkServer/writeChunk?uuid=" + x.getId());
+            // TODO Do we need to handle the response here?
             request.get().thenApply(response -> {
                 Logger.info(response.asJson().toString());
                 return response.asJson();
@@ -106,8 +106,17 @@ public class Master extends Controller {
     }
 
     public Result registerChunkServer(String ip, String port) {
+        if (chunkServerList.stream().anyMatch(x -> (x.getIp().equals(ip) && x.getPort().equals(port)))) {
+            // We already have a chunkServer with this IP and port
+            return badRequest("ChunkServer with IP: " + ip + " and port: " + port + " already exists");
+        }
         chunkServerList.add(new ChunkServer(ip, port));
         return ok();
+    }
+
+    public Result registerNewChunkServer() {
+        // Generate IP and port here
+        return redirect("/master/registerChunkServer?ip=localhost&port=9002");
     }
 
     public Result getChunkServers() {
