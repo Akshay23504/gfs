@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import play.Logger;
 import play.libs.Json;
+import play.libs.ws.WSClient;
+import play.libs.ws.WSRequest;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
@@ -21,10 +23,12 @@ import java.util.Arrays;
 public class ChunkServer extends Controller {
 
     private final services.ChunkServer chunkServer;
+    private final WSClient wsClient;
 
     @Inject
-    public ChunkServer(services.ChunkServer chunkServer) {
+    public ChunkServer(services.ChunkServer chunkServer, WSClient wsClient) {
         this.chunkServer = chunkServer;
+        this.wsClient = wsClient;
     }
 
     public Result poll() {
@@ -51,14 +55,13 @@ public class ChunkServer extends Controller {
     }
 
     public Result stop(String ip, String port) {
-        if (true) return ok();
-        if (System.getProperty("http.port").equals(port)) {
-            return forbidden(); // Cannot stop chunkServer from the same chunkServer!
-        }
-        return redirect("http://localhost:9000/chunkServerDead?ip=" + ip + "&port=" + port);
+        WSRequest request = wsClient.url("http://localhost:9000/master/chunkServerDead?ip=" + ip + "&port=" + port);
+        request.get();
+        System.exit(1);
+        return ok();
     }
 
-    public Result writeChunk() {
+    public Result writeChunk(String uuid) {
         Http.MultipartFormData.FilePart<Object> filePartResponse = request().body().asMultipartFormData().getFile("content");
         try {
             byte[] content = Files.readAllBytes(Paths.get(((File) filePartResponse.getFile()).getPath()));
@@ -68,9 +71,7 @@ public class ChunkServer extends Controller {
         }
         // TODO Do we need DataOutputStream?
         try {
-            BufferedWriter writer = new BufferedWriter(
-                    new FileWriter(chunkServer.getChunksPath() + filePartResponse.getFilename())
-            );
+            BufferedWriter writer = new BufferedWriter(new FileWriter(chunkServer.getChunksPath() + uuid));
             writer.write(123);
             writer.close();
         } catch (IOException e) {

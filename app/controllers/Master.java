@@ -31,6 +31,8 @@ public class Master extends Controller {
     private ArrayNode arrayNode;
     private List<ChunkServer> chunkServerList;
     private static final String gfsPorts = "../conf/gfsPorts.json";
+//    private static final String gfsPorts = "conf/gfsPorts.json";
+    // TODO change directory based on mode
 
     @Inject
     public Master(ObjectMapper objectMapper, WSClient wsClient, ObjectMapper mapper) {
@@ -177,6 +179,7 @@ public class Master extends Controller {
             WSRequest request = wsClient.url("http://" + chunkServer.getAddress() + "/chunkServer/poll");
             request.get().thenApply(x -> {
                 x.asJson().get("chunks")
+                        // TODO This is kind of appending the data.
                         .forEach(id -> chunkServer.addChunkServerMetadata(new ChunkMetadata(id.asText())));
                 return x.asJson();
             });
