@@ -12,6 +12,7 @@ function getChunkServers() {
                     "<td scope='row'><button id=" + value.port + " class='btn btn-danger'>Stop</button></td>" +
                 "</tr>"
             );
+            // TODO Update request to get the chunks
             $('#' + value.port).click(function(event) {
                 event.preventDefault();
                 $.get(stopAddress, function () {

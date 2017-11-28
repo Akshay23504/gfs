@@ -1,6 +1,5 @@
 # Routes
 # This file defines all application routes (Higher priority routes first)
-# ~~~~
 
 # Home page
 GET     /                                  controllers.Application.index
@@ -22,6 +21,7 @@ GET     /master/chunkServerDead            controllers.Master.chunkServerDead(ip
 # ChunkServer
 GET     /chunkServer/poll                  controllers.ChunkServer.poll()
 GET     /chunkServer/readChunk             controllers.ChunkServer.readChunk(uuid: String)
+GET     /chunkServer/initializeChunk        controllers.ChunkServer.initializeChunk(uuid: String)
 POST    /chunkServer/writeChunk            controllers.ChunkServer.writeChunk(uuid: String)
 
 # Map static resources from the /public folder to the /assets URL path
