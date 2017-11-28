@@ -61,6 +61,18 @@ public class ChunkServer extends Controller {
         return ok();
     }
 
+    public Result initializeChunk(String uuid) {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(chunkServer.getChunksPath() +uuid));
+            writer.write(123);
+            writer.close();
+        } catch (IOException e) {
+            Logger.error(e.getMessage());
+            return internalServerError();
+        }
+        return ok();
+    }
+
     public Result writeChunk(String uuid) {
         Http.MultipartFormData.FilePart<Object> filePartResponse = request().body().asMultipartFormData().getFile("content");
         try {
