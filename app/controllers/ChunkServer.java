@@ -58,7 +58,18 @@ public class ChunkServer extends Controller {
         return redirect("http://localhost:9000/chunkServerDead?ip=" + ip + "&port=" + port);
     }
 
-    public Result writeChunk() {
+    public Result initializeChunk(String uuid) {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(chunkServer.getChunksPath() +uuid));
+            writer.write(123);
+            writer.close();
+        } catch (IOException e) {
+            Logger.error(e.getMessage());
+            return internalServerError();
+        }
+        return ok();
+    }
+    public Result writeChunk(String uuid) {
         Http.MultipartFormData.FilePart<Object> filePartResponse = request().body().asMultipartFormData().getFile("content");
         try {
             byte[] content = Files.readAllBytes(Paths.get(((File) filePartResponse.getFile()).getPath()));
@@ -68,9 +79,7 @@ public class ChunkServer extends Controller {
         }
         // TODO Do we need DataOutputStream?
         try {
-            BufferedWriter writer = new BufferedWriter(
-                    new FileWriter(chunkServer.getChunksPath() + filePartResponse.getFilename())
-            );
+            BufferedWriter writer = new BufferedWriter(new FileWriter(chunkServer.getChunksPath() +uuid));
             writer.write(123);
             writer.close();
         } catch (IOException e) {

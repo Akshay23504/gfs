@@ -60,15 +60,18 @@ public class Master extends Controller {
             return internalServerError(); // Should not happen
         }
 
+
+
         gfsFile.chunkMetadataList.forEach(x -> {
             x.setAddress(chooseChunkServerForChunk().getAddress());
-            WSRequest request = wsClient.url("http://" + x.getAddress() + "/chunkServer/writeChunk?uuid=" + x.getId());
+            WSRequest request = wsClient.url("http://" + x.getAddress() + "/chunkServer/initializeChunk?uuid=" + x.getId());
             request.get().thenApply(response -> {
                 Logger.info(response.asJson().toString());
                 return response.asJson();
             });
         });
-        return ok();
+
+        return redirect("http://localhost:9000/master/triggerPolling");
     }
 
     private ChunkServer chooseChunkServerForChunk() {
