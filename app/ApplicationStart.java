@@ -1,4 +1,5 @@
 import play.Environment;
+import play.Logger;
 import play.inject.ApplicationLifecycle;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSRequest;
@@ -17,7 +18,7 @@ public class ApplicationStart {
     // Inject the application's Environment upon start-up and register hook(s) for shut-down.
     @Inject
     public ApplicationStart(ApplicationLifecycle lifecycle, Environment environment, WSClient wsClient) throws ExecutionException, InterruptedException {
-        System.out.println("Registering with master");
+        Logger.info("Registering with master");
         lifecycle.addStopHook( () -> CompletableFuture.completedFuture(null));
 
         WSRequest request = wsClient.url("http://localhost:9000/master/createFile?filename=abc");

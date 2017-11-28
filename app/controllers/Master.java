@@ -8,14 +8,13 @@ import models.ChunkMetadata;
 import models.ChunkServer;
 import models.GFSFile;
 import play.Logger;
-import services.GFSFileSystem;
 import play.libs.Json;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSRequest;
 import play.mvc.Controller;
 import play.mvc.Result;
+import services.GFSFileSystem;
 import views.html.dashboard;
-import views.html.index;
 
 import javax.inject.Inject;
 import java.io.*;
@@ -31,6 +30,7 @@ public class Master extends Controller {
     private final ObjectMapper mapper;
     private ArrayNode arrayNode;
     private List<ChunkServer> chunkServerList;
+    private static final String gfsPorts = "../conf/gfsPorts.json";
 
     @Inject
     public Master(ObjectMapper objectMapper, WSClient wsClient, ObjectMapper mapper) {
@@ -64,7 +64,8 @@ public class Master extends Controller {
 
         gfsFile.chunkMetadataList.forEach(x -> {
             x.setAddress(chooseChunkServerForChunk().getAddress());
-            WSRequest request = wsClient.url("http://" + x.getAddress() + "/chunkServer/initializeChunk?uuid=" + x.getId());
+            WSRequest request = wsClient.url("http://" + x.getAddress() + "/chunkServer/writeChunk?uuid=" + x.getId());
+            // TODO Do we need to handle the response here?
             request.get().thenApply(response -> {
                 Logger.info(response.asJson().toString());
                 return response.asJson();
@@ -75,7 +76,11 @@ public class Master extends Controller {
     }
 
     private ChunkServer chooseChunkServerForChunk() {
-        return chunkServerList.get(new Random().nextInt(chunkServerList.size()));
+        List<ChunkServer> runningChunkServers = chunkServerList
+                .stream()
+                .filter(x -> x.getStatus().equals(ChunkServer.ChunkServerStatus.RUNNING))
+                .collect(Collectors.toList());
+        return runningChunkServers.get(new Random().nextInt(runningChunkServers.size()));
     }
 
     public Result getChunkHandlesForFile(String filename) {
@@ -104,8 +109,45 @@ public class Master extends Controller {
         return ok(handles);
     }
 
+    // TODO We don't need this I think
     public Result registerChunkServer(String ip, String port) {
-        chunkServerList.add(new ChunkServer(ip, port));
+        if (chunkServerList.stream().anyMatch(x -> (x.getIp().equals(ip) && x.getPort().equals(port)))) {
+            // We already have a chunkServer with this IP and port
+            return badRequest("ChunkServer with IP: " + ip + " and port: " + port + " already exists");
+        }
+//        chunkServerList.add(new ChunkServer(ip, port));
+        return ok();
+    }
+
+    public Result registerNewChunkServer() throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(gfsPorts));
+        String jsonString = bufferedReader.readLine();
+        bufferedReader.close();
+        int portNumber;
+        ObjectNode objectNode = Json.newObject();
+        ArrayNode portsArray = objectNode.putArray("ports");
+        ArrayNode tempPortsArray = null;
+        if (jsonString == null || jsonString.isEmpty()) {
+            portNumber = 9001;
+        } else {
+            tempPortsArray = (ArrayNode) Json.parse(jsonString).get("ports");
+            portNumber = tempPortsArray.get(tempPortsArray.size() - 1).asInt() + 1; // This will be our new chunkServer's port
+        }
+        if (tempPortsArray != null) {
+            tempPortsArray.forEach(portsArray::add);
+        }
+        portsArray.add(portNumber);
+        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(gfsPorts));
+        bufferedWriter.write(objectNode.toString());
+        bufferedWriter.close();
+        if (chunkServerList
+                .stream()
+                .anyMatch(x -> (x.getIp().equals("localhost") && x.getPort().equals(String.valueOf(portNumber))))) {
+            // We already have a chunkServer with this IP and port
+            return badRequest("ChunkServer with IP: localhost and port: " + portNumber + " already exists");
+        }
+        Runtime.getRuntime().exec("sh ../conf/chunkServer.sh " + portNumber);
+        chunkServerList.add(new ChunkServer("localhost", String.valueOf(portNumber)));
         return ok();
     }
 
