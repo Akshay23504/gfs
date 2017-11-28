@@ -14,7 +14,7 @@ public class GFSFileSystem implements Serializable {
 
     private static final long serialVersionUID = 1L;
     public static final Integer chunkSizeBytes = 64;
-    private static final String gfsFile = "conf/gfs.json";
+    private static final String gfsFile = "../conf/gfs.json";
     private static List<GFSFile> GFSFiles = new ArrayList<>();
 
     public static void addFile(GFSFile file) throws IOException {

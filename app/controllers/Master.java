@@ -17,7 +17,7 @@ import services.GFSFileSystem;
 import views.html.dashboard;
 
 import javax.inject.Inject;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -30,6 +30,7 @@ public class Master extends Controller {
     private final ObjectMapper mapper;
     private ArrayNode arrayNode;
     private List<ChunkServer> chunkServerList;
+    private static final String gfsPorts = "../conf/gfsPorts.json";
 
     @Inject
     public Master(ObjectMapper objectMapper, WSClient wsClient, ObjectMapper mapper) {
@@ -105,18 +106,46 @@ public class Master extends Controller {
         return ok(handles);
     }
 
+    // TODO We don't need this I think
     public Result registerChunkServer(String ip, String port) {
         if (chunkServerList.stream().anyMatch(x -> (x.getIp().equals(ip) && x.getPort().equals(port)))) {
             // We already have a chunkServer with this IP and port
             return badRequest("ChunkServer with IP: " + ip + " and port: " + port + " already exists");
         }
-        chunkServerList.add(new ChunkServer(ip, port));
+//        chunkServerList.add(new ChunkServer(ip, port));
         return ok();
     }
 
-    public Result registerNewChunkServer() {
-        // Generate IP and port here
-        return redirect("/master/registerChunkServer?ip=localhost&port=9002");
+    public Result registerNewChunkServer() throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(gfsPorts));
+        String jsonString = bufferedReader.readLine();
+        bufferedReader.close();
+        int portNumber;
+        ObjectNode objectNode = Json.newObject();
+        ArrayNode portsArray = objectNode.putArray("ports");
+        ArrayNode tempPortsArray = null;
+        if (jsonString == null || jsonString.isEmpty()) {
+            portNumber = 9001;
+        } else {
+            tempPortsArray = (ArrayNode) Json.parse(jsonString).get("ports");
+            portNumber = tempPortsArray.get(tempPortsArray.size() - 1).asInt() + 1; // This will be our new chunkServer's port
+        }
+        if (tempPortsArray != null) {
+            tempPortsArray.forEach(portsArray::add);
+        }
+        portsArray.add(portNumber);
+        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(gfsPorts));
+        bufferedWriter.write(objectNode.toString());
+        bufferedWriter.close();
+        if (chunkServerList
+                .stream()
+                .anyMatch(x -> (x.getIp().equals("localhost") && x.getPort().equals(String.valueOf(portNumber))))) {
+            // We already have a chunkServer with this IP and port
+            return badRequest("ChunkServer with IP: localhost and port: " + portNumber + " already exists");
+        }
+        Runtime.getRuntime().exec("sh ../conf/chunkServer.sh " + portNumber);
+        chunkServerList.add(new ChunkServer("localhost", String.valueOf(portNumber)));
+        return ok();
     }
 
     public Result getChunkServers() {
