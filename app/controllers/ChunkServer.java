@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import play.Logger;
 import play.libs.Json;
 import play.libs.ws.WSClient;
-import play.libs.ws.WSRequest;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;

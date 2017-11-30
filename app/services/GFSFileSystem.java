@@ -21,20 +21,17 @@ public class GFSFileSystem {
 
     private static String gfsFile;
     private final Environment environment;
+    private static List<GFSFile> GFSFiles = new ArrayList<>();
 
     @Inject
     public GFSFileSystem(Environment environment) {
         this.environment = environment;
-        if (this.environment.isDev())
-
-        {
+        if (this.environment.isDev()) {
             gfsFile = "conf/gfs.json";
         } else {
             gfsFile = "../conf/gfs.json";
         }
     }
-
-    private static List<GFSFile> GFSFiles = new ArrayList<>();
 
     public static void addFile(GFSFile file) throws IOException {
         GFSFiles.add(file);
