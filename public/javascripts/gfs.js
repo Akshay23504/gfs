@@ -1,5 +1,7 @@
 function getChunkServers() {
     $("#chunkServerTableBody").html("");
+    $("#fileTableBody").html("");
+
     $.get("/master/triggerPolling", function () {});
     $.get("/master/getChunkServers", function(data) {
         $.each(data.chunkServers[0], function(index, value) {
@@ -21,6 +23,14 @@ function getChunkServers() {
                 });
             });
         });
+    });
+
+    $.get("/master/getFiles", function(data) {
+        $("#fileTableBody").append("" +
+            "<tr>" +
+            "<td scope='row'>" + JSON.stringify(data,  null, 2) + "</td>" +
+            "</tr>"
+        );
     });
 }
 

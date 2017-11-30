@@ -178,6 +178,13 @@ public class Master extends Controller {
         );
     }
 
+    public Result getFiles() {
+        ObjectNode metadata = Json.newObject();
+        arrayNode = metadata.putArray("files");
+        arrayNode.add(mapper.valueToTree(gfsFileSystem.getFiles()));
+        return ok(metadata);
+    }
+
     public Result chunkServerDead(String ip, String port) {
         chunkServerList
                 .stream()
