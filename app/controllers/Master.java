@@ -34,6 +34,7 @@ public class Master extends Controller {
     private String gfsPorts;
     private String newChunkServerScript;
     private final Environment environment;
+    GFSFileSystem gfsFileSystem;
 
     @Inject
     public Master(ObjectMapper objectMapper, WSClient wsClient, ObjectMapper mapper, Environment environment) {
@@ -49,6 +50,7 @@ public class Master extends Controller {
             gfsPorts = "../conf/gfsPorts.json";
             newChunkServerScript = "sh ../conf/chunkServer.sh "; // Mind the space after .sh
         }
+        gfsFileSystem = new GFSFileSystem(environment);
     }
 
     // TODO we don't need this now
@@ -64,9 +66,10 @@ public class Master extends Controller {
             gfsFile.addChunkMetadata(new ChunkMetadata(UUID.randomUUID().toString()));
         }
         try {
-            GFSFileSystem.addFile(gfsFile);
+            gfsFileSystem.addFile(gfsFile);
         } catch (IOException e) {
             Logger.error("File creation failed :( ");
+            Logger.error(e.getMessage());
             return internalServerError(); // Should not happen
         }
 
@@ -95,7 +98,7 @@ public class Master extends Controller {
 
     public Result getChunkHandlesForFile(String filename) {
         List<ChunkMetadata> chunkHandles = new ArrayList<>();
-        GFSFileSystem.getFiles()
+        gfsFileSystem.getFiles()
                 .stream()
                 .filter(file -> file.getName().equals(filename))
                 .forEach(file -> {

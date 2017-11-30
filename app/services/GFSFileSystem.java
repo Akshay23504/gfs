@@ -6,17 +6,34 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import models.ChunkMetadata;
 import models.GFSFile;
+import play.Environment;
 import play.libs.Json;
 
+import javax.inject.Inject;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GFSFileSystem implements Serializable {
+public class GFSFileSystem {
 
     private static final long serialVersionUID = 1L;
     public static final Integer chunkSizeBytes = 64;
-    private static final String gfsFile = "../conf/gfs.json";
+
+    private static String gfsFile;
+    private final Environment environment;
+
+    @Inject
+    public GFSFileSystem(Environment environment) {
+        this.environment = environment;
+        if (this.environment.isDev())
+
+        {
+            gfsFile = "conf/gfs.json";
+        } else {
+            gfsFile = "../conf/gfs.json";
+        }
+    }
+
     private static List<GFSFile> GFSFiles = new ArrayList<>();
 
     public static void addFile(GFSFile file) throws IOException {
