@@ -70,8 +70,6 @@ public class Master extends Controller {
             return internalServerError(); // Should not happen
         }
 
-
-
         gfsFile.chunkMetadataList.forEach(x -> {
             x.setAddress(chooseChunkServerForChunk().getAddress());
             WSRequest request = wsClient.url("http://" + x.getAddress() + "/chunkServer/writeChunk?uuid=" + x.getId());
@@ -81,7 +79,6 @@ public class Master extends Controller {
                 return response.asJson();
             });
         });
-
         return redirect("http://localhost:9000/master/triggerPolling");
     }
 
@@ -141,12 +138,14 @@ public class Master extends Controller {
             portNumber = 9001;
         } else {
             tempPortsArray = (ArrayNode) Json.parse(jsonString).get("ports");
-            portNumber = tempPortsArray.get(tempPortsArray.size() - 1).asInt() + 1; // This will be our new chunkServer's port
+            // This will be our new chunkServer's port
+            portNumber = tempPortsArray.get(tempPortsArray.size() - 1).asInt() + 1;
         }
         if (tempPortsArray != null) {
             tempPortsArray.forEach(portsArray::add);
         }
         portsArray.add(portNumber);
+        // TODO Uncomment this
 //        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(gfsPorts));
 //        bufferedWriter.write(objectNode.toString());
 //        bufferedWriter.close();
