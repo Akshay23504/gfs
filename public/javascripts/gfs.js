@@ -3,7 +3,7 @@ function getChunkServers() {
     $.get("/master/getChunkServers", function(data) {
         $.each(data.chunkServers[0], function(index, value) {
             if (index == 0) $("#chunkServerTableBody").html("");
-            var stopAddress = "/master/chunkServerDead?ip=" + value.ip + "&port=" + value.port;
+            var stopAddress = "http://" + value.ip + ":" + value.port + "/chunkServer/stop?ip=" + value.ip + "&port=" + value.port;
             $("#chunkServerTableBody").append("" +
                 "<tr>" +
                     "<td scope='row'>" + value.ip + ":" + value.port + "</td>" +

@@ -55,8 +55,7 @@ public class ChunkServer extends Controller {
     }
 
     public Result stop(String ip, String port) {
-        WSRequest request = wsClient.url("http://localhost:9000/master/chunkServerDead?ip=" + ip + "&port=" + port);
-        request.get();
+        wsClient.url("http://localhost:9000/master/chunkServerDead?ip=" + ip + "&port=" + port).get();
         System.exit(1);
         return ok();
     }

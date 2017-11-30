@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import models.ChunkMetadata;
 import models.ChunkServer;
 import models.GFSFile;
+import play.Environment;
 import play.Logger;
 import play.libs.Json;
 import play.libs.ws.WSClient;
@@ -30,16 +31,24 @@ public class Master extends Controller {
     private final ObjectMapper mapper;
     private ArrayNode arrayNode;
     private List<ChunkServer> chunkServerList;
-    private static final String gfsPorts = "../conf/gfsPorts.json";
-//    private static final String gfsPorts = "conf/gfsPorts.json";
-    // TODO change directory based on mode
+    private String gfsPorts;
+    private String newChunkServerScript;
+    private final Environment environment;
 
     @Inject
-    public Master(ObjectMapper objectMapper, WSClient wsClient, ObjectMapper mapper) {
+    public Master(ObjectMapper objectMapper, WSClient wsClient, ObjectMapper mapper, Environment environment) {
         this.wsClient = wsClient;
         this.mapper = objectMapper;
         arrayNode = mapper.createArrayNode();
         chunkServerList = new ArrayList<>();
+        this.environment = environment;
+        if (this.environment.isDev()) {
+            gfsPorts = "conf/gfsPorts.json";
+            newChunkServerScript = "activator run -Dhttp.port=";
+        } else {
+            gfsPorts = "../conf/gfsPorts.json";
+            newChunkServerScript = "sh ../conf/chunkServer.sh "; // Mind the space after .sh
+        }
     }
 
     // TODO we don't need this now
@@ -49,7 +58,6 @@ public class Master extends Controller {
 
     public Result createFile(String filename, String size) {
         Integer chunkNumber = (int) Math.ceil(Double.valueOf(size) / GFSFileSystem.chunkSizeBytes);
-        //TODO: create first initial empty chunk
         int counter = 0;
         GFSFile gfsFile = new GFSFile(filename);
         while(counter++ < chunkNumber) {
@@ -139,16 +147,16 @@ public class Master extends Controller {
             tempPortsArray.forEach(portsArray::add);
         }
         portsArray.add(portNumber);
-        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(gfsPorts));
-        bufferedWriter.write(objectNode.toString());
-        bufferedWriter.close();
+//        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(gfsPorts));
+//        bufferedWriter.write(objectNode.toString());
+//        bufferedWriter.close();
         if (chunkServerList
                 .stream()
                 .anyMatch(x -> (x.getIp().equals("localhost") && x.getPort().equals(String.valueOf(portNumber))))) {
             // We already have a chunkServer with this IP and port
             return badRequest("ChunkServer with IP: localhost and port: " + portNumber + " already exists");
         }
-        Runtime.getRuntime().exec("sh ../conf/chunkServer.sh " + portNumber);
+        Runtime.getRuntime().exec(newChunkServerScript + portNumber);
         chunkServerList.add(new ChunkServer("localhost", String.valueOf(portNumber)));
         return ok();
     }

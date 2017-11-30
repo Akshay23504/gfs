@@ -72,8 +72,10 @@
         </div>
 
         <script>
-            $("#newChunkServerSuccessText").hide();
-            $("#newChunkServerFailedText").hide();
+            $(document).ready(function() {
+                $("#newChunkServerSuccessText").hide();
+                $("#newChunkServerFailedText").hide();
+            });
             getChunkServers();
         </script>
     </body>
