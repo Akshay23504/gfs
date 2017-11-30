@@ -15,6 +15,7 @@ GET     /master/dashboard                  controllers.Master.dashboard()
 
 GET     /master/getChunkServers            controllers.Master.getChunkServers()
 GET     /master/getChunkServer             controllers.Master.getChunkServer(ip: String, port:String)
+GET     /master/getFiles                    controllers.Master.getFiles()
 GET     /master/getChunkHandlesForFile     controllers.Master.getChunkHandlesForFile(filename: String)
 GET     /master/chunkServerDead            controllers.Master.chunkServerDead(ip: String, port:String)
 
