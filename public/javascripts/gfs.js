@@ -34,7 +34,7 @@ function getChunkServers() {
     });
 }
 
-// setInterval(getChunkServers, 10000);
+setInterval(getChunkServers, 10000);
 
 function newChunkServer() {
     $.get("/master/registerNewChunkServer", function(data) {

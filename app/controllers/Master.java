@@ -75,7 +75,7 @@ public class Master extends Controller {
 
         gfsFile.chunkMetadataList.forEach(x -> {
             x.setAddress(chooseChunkServerForChunk().getAddress());
-            WSRequest request = wsClient.url("http://" + x.getAddress() + "/chunkServer/writeChunk?uuid=" + x.getId());
+            WSRequest request = wsClient.url("http://" + x.getAddress() + "/chunkServer/initializeChunk?uuid=" + x.getId());
             // TODO Do we need to handle the response here?
             request.get().thenApply(response -> {
                 Logger.info(response.asJson().toString());
@@ -149,9 +149,11 @@ public class Master extends Controller {
         }
         portsArray.add(portNumber);
         // TODO Uncomment this
-//        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(gfsPorts));
-//        bufferedWriter.write(objectNode.toString());
-//        bufferedWriter.close();
+        if(environment.isProd()) {
+            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(gfsPorts));
+            bufferedWriter.write(objectNode.toString());
+            bufferedWriter.close();
+        }
         if (chunkServerList
                 .stream()
                 .anyMatch(x -> (x.getIp().equals("localhost") && x.getPort().equals(String.valueOf(portNumber))))) {
