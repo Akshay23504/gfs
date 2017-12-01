@@ -11,7 +11,6 @@ public class ChunkServer {
     private String ip;
     private String port;
     private ChunkServerStatus status;
-    private Process process;
 
     public ChunkServer(String ip, String port) {
         this.ip = ip;
