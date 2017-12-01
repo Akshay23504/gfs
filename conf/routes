@@ -23,7 +23,7 @@ GET     /master/chunkServerDead            controllers.Master.chunkServerDead(ip
 GET     /chunkServer/poll                  controllers.ChunkServer.poll()
 GET     /chunkServer/readChunk             controllers.ChunkServer.readChunk(uuid: String)
 GET     /chunkServer/initializeChunk        controllers.ChunkServer.initializeChunk(uuid: String)
-POST    /chunkServer/writeChunk            controllers.ChunkServer.writeChunk(uuid: String)
+POST    /chunkServer/writeChunk            controllers.ChunkServer.writeChunk()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

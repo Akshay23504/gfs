@@ -71,23 +71,18 @@ public class ChunkServer extends Controller {
         return ok();
     }
 
-    public Result writeChunk(String uuid) {
+    public Result writeChunk() {
         Http.MultipartFormData.FilePart<Object> filePartResponse = request().body().asMultipartFormData().getFile("content");
         try {
             byte[] content = Files.readAllBytes(Paths.get(((File) filePartResponse.getFile()).getPath()));
             Logger.info(Arrays.toString(content));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(chunkServer.getChunksPath() + filePartResponse.getFilename()));
+            writer.write(Arrays.toString(content));
+            writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        // TODO Do we need DataOutputStream?
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(chunkServer.getChunksPath() + uuid));
-            writer.write(123);
-            writer.close();
-        } catch (IOException e) {
-            Logger.error(e.getMessage());
-            return internalServerError();
-        }
+
         return ok();
     }
 
