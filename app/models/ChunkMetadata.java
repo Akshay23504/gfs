@@ -1,5 +1,8 @@
 package models;
 
+/**
+ * The model class that has the entities of the chunk metadata
+ */
 public class ChunkMetadata {
 
     private String uuid;

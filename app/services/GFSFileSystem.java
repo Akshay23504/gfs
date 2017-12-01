@@ -7,12 +7,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import models.ChunkMetadata;
 import models.GFSFile;
 import play.Environment;
+import play.Logger;
 import play.libs.Json;
 
 import javax.inject.Inject;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GFSFileSystem {
 
@@ -32,6 +34,7 @@ public class GFSFileSystem {
     }
 
     public static void addFile(GFSFile file) throws IOException {
+        GFSFiles = GFSFiles.stream().filter(x -> x.getName().equals(file.getName())).collect(Collectors.toList());
         GFSFiles.add(file);
         ObjectNode files = Json.newObject();
         ArrayNode arrayNode = files.putArray("files");
@@ -48,22 +51,17 @@ public class GFSFileSystem {
             BufferedReader reader = new BufferedReader(new FileReader(gfsFile));
             jsonNode = Json.parse(reader.readLine());
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            Logger.error(e.getMessage());
             return gfsFiles;
         }
 
         GFSFiles = new ArrayList<>();
-        System.out.println(jsonNode.toString());
         jsonNode.get("files").get(0).forEach(x -> {
-            System.out.println(x.toString());
             GFSFile gfsFile = new GFSFile(x.get("name").asText());
-            x.get("chunkMetadataList").forEach(e -> {
-                gfsFile.addChunkMetadata(new ChunkMetadata(e.get("id").asText()));
-            });
+            x.get("chunkMetadataList").forEach(e -> gfsFile.addChunkMetadata(new ChunkMetadata(e.get("id").asText())));
             GFSFiles.add(gfsFile);
 
         });
-        System.out.println(GFSFiles);
         return GFSFiles;
     }
 

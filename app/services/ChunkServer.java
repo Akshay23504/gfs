@@ -6,6 +6,9 @@ import play.Logger;
 import javax.inject.Inject;
 import java.io.File;
 
+/**
+ * Service class that can have service methods needed by the chunkServer
+ */
 public class ChunkServer {
 
     private final Environment environment;
@@ -15,6 +18,11 @@ public class ChunkServer {
         this.environment = environment;
     }
 
+    /**
+     * Get the chunks path for a chunkServer.
+     * This will also create directories if needed.
+     * @return
+     */
     public String getChunksPath() {
         String port = System.getProperty("http.port");
         File file = new File(environment.rootPath() + "/chunks");
