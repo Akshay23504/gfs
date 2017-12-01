@@ -16,9 +16,7 @@ import java.util.List;
 
 public class GFSFileSystem {
 
-    private static final long serialVersionUID = 1L;
     public static final Integer chunkSizeBytes = 64;
-
     private static String gfsFile;
     private final Environment environment;
     private static List<GFSFile> GFSFiles = new ArrayList<>();

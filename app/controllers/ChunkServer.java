@@ -61,7 +61,7 @@ public class ChunkServer extends Controller {
 
     public Result initializeChunk(String uuid) {
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(chunkServer.getChunksPath() +uuid));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(chunkServer.getChunksPath() + uuid));
             writer.write(123);
             writer.close();
         } catch (IOException e) {
