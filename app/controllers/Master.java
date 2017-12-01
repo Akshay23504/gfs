@@ -77,7 +77,7 @@ public class Master extends Controller {
      * redirect to the polling API of the master.
      * @param filename filename to create
      * @param size Size of the file
-     * @return 200
+     * @return redirect to triggerPolling
      */
     public Result createFile(String filename, String size) {
         Integer chunkNumber = (int) Math.ceil(Double.valueOf(size) / GFSFileSystem.chunkSizeBytes);
@@ -102,7 +102,7 @@ public class Master extends Controller {
                     .url("http://" + x.getAddress() + "/chunkServer/initializeChunk?uuid=" + x.getId());
             request.get().thenApply(WSResponse::asJson);
         });
-        return ok();
+        return redirect("http://localhost:9000/master/triggerPolling");
     }
 
     /**
@@ -127,7 +127,7 @@ public class Master extends Controller {
      */
     public Result getChunkHandlesForFile(String filename) throws InterruptedException {
         ObjectNode handles = Json.newObject();
-        wsClient.url("http://localhost:9000/master/triggerPolling").get().wait(10000);
+        wsClient.url("http://localhost:9000/master/triggerPolling").get();
         List<ChunkMetadata> chunkHandles = new ArrayList<>();
         GFSFileSystem.getFiles()
                 .stream()

@@ -11,5 +11,7 @@ scalaVersion := "2.11.11"
 libraryDependencies ++= Seq( javaJdbc , cache , javaWs)
 
 unmanagedResourceDirectories in Test <+=  baseDirectory ( _ /"target/web/public/test" )
-watchSources := (watchSources.value --- baseDirectory.value / "conf"     ** "*").get
-watchSources := (watchSources.value --- baseDirectory.value / "chunks"     ** "*").get
+
+
+watchSources := watchSources.value.filter { _.getName != "chunks" }
+watchSources := watchSources.value.filter { _.getName != "conf" }
