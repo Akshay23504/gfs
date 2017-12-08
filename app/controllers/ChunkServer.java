@@ -27,6 +27,7 @@ public class ChunkServer extends Controller {
 
     /**
      * Constructor to initialize chunkServer services and wsClient
+     *
      * @param chunkServer ChunkServer services
      * @param wsClient WSClient to make async requests
      */
@@ -39,10 +40,11 @@ public class ChunkServer extends Controller {
     /**
      * This API reads the directories of the chunks (we are dealing with a
      * single level of directory in our GFS, but the logic can be extended to
-     * handle any level of directories) and for each file, we create JSON.
+     * handle any level of directories) and for each file, we create a JSON.
      * This JSON consists "chunks" as the key and an array of chunks for a
      * particular chunkServer
-     * @return JSON of chunks
+     *
+     * @return JSON of chunks in string format
      */
     public Result poll() {
         File folder = new File(chunkServer.getChunksPath());
@@ -65,22 +67,26 @@ public class ChunkServer extends Controller {
     /**
      * This API takes an IP (localhost in our case) and a port and stops the
      * chunkServer running on the IP and the port. It also makes an async
-     * request using the wsClient to the master indicating it is stopped.
+     * request using the wsClient to the master indicating it will be stopped.
      * The master can update the metadata and the chunkServerList for this
      * chunkServer.
      *
      * We choose to do this way, instead of the master trying to contact the
-     * chunkServer because this was more easy and the master and is an extra
-     * task which is not specified in the requirements.
+     * chunkServer because this was more easy and for the master this is an
+     * extra task which is not specified in the requirements. The master
+     * does contact the chunkServer in heartbeat messages in our application,
+     * but we have no functionality for telling if the chunkServer is alive or
+     * dead
      *
      * This API can be triggered by the Stop button on the master dashboard
      * for each chunkServer
      *
      * This also stops the chunkServer and hence the return statement will not
-     * be reached
+     * be reached!
+     *
      * @param ip IP of the chunkServer to stop
      * @param port port number of the chunkServer to stop
-     * @return 200, but this will not be reached
+     * @return ok (200), but this will not be reached
      */
     public Result stop(String ip, String port) {
         wsClient.url("http://localhost:9000/master/chunkServerDead?ip=" + ip + "&port=" + port).get();
@@ -91,9 +97,10 @@ public class ChunkServer extends Controller {
     /**
      * This API gets an uuid as a parameter from the client and initializes a
      * chunk for the uuid
+     *
      * @param uuid uuid from the client
-     * @return ok if everything goes well,
-     *         A serverError if there is an IOException
+     * @return ok (200), if everything goes well,
+     *         A serverError if there is an IOException. Should not happen
      */
     public Result initializeChunk(String uuid) {
         try {
@@ -112,6 +119,7 @@ public class ChunkServer extends Controller {
      * This is a POST request and takes in a multipartFormData from the client.
      * We get the filePartResponse and the byte content from the request and
      * write the bytes to the appropriate chunk directory and files.
+     *
      * @return ok (200) or serverError (500)
      */
     public Result writeChunk() {
@@ -134,8 +142,9 @@ public class ChunkServer extends Controller {
     /**
      * This API deals with reading the chunks using the uuid sent from the
      * client. We get an array of bytes from the chunks and the uuid
-     * combination which we would have earlier stored using the write API.
-     * This array of bytes is then transferred as a octet-stream to the client.
+     * combination which we would have stored using the write API.
+     * This array of bytes is then transferred as an octet-stream to the client.
+     *
      * @param uuid uuid to read from
      * @return byte array as an octet-stream
      */

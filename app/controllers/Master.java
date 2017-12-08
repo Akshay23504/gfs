@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 /**
  * Master controller to handle chunks, create files, respond to clients,
  * choose chunkServers to read and write chunks, register new chunkServers,
- * polling on the chunkServers and few other features.
+ * polling on the chunkServers, heartbeat messages and few other features.
  */
 public class Master extends Controller {
 
@@ -37,12 +37,13 @@ public class Master extends Controller {
     private String gfsPorts;
     private String newChunkServerScript;
     private final Environment environment;
-    GFSFileSystem gfsFileSystem;
+    private GFSFileSystem gfsFileSystem;
 
     /**
      * Constructor to initialize few things
      * Some things are dependent on the environment we are running the
      * application in.
+     *
      * @param objectMapper objectMapper for JSON parsing and construction
      * @param wsClient wsClient to make async requests
      * @param environment Environment the application is running in
@@ -65,7 +66,7 @@ public class Master extends Controller {
         gfsFileSystem = new GFSFileSystem(environment);
     }
 
-    // TODO we don't need this now
+    // This is not used
     public Result chunkHandle(String filename, String chunkIndex) {
         return ok(new java.io.File("/build.sbt"));
     }
@@ -75,6 +76,7 @@ public class Master extends Controller {
      * a request to one of the chunkServers to initialize the chunks and
      * finally triggers a polling and updates the metadata. More like this will
      * redirect to the polling API of the master.
+     *
      * @param filename filename to create
      * @param size Size of the file
      * @return redirect to triggerPolling
@@ -87,7 +89,9 @@ public class Master extends Controller {
             gfsFile.addChunkMetadata(new ChunkMetadata(UUID.randomUUID().toString()));
         }
         try {
-            GFSFileSystem.addFile(gfsFile);
+            if (chunkServerList.stream().anyMatch(x -> (x.getStatus().equals(ChunkServer.ChunkServerStatus.RUNNING)))) {
+                GFSFileSystem.addFile(gfsFile);
+            }
         } catch (IOException e) {
             Logger.error("File creation failed :( ");
             Logger.error(e.getMessage());
@@ -97,29 +101,37 @@ public class Master extends Controller {
         // For each of the metadata list that we have, choose a chunkServer
         // and make a request to initialize chunks on the chosen chunkServer
         gfsFile.chunkMetadataList.forEach(x -> {
-            x.setAddress(chooseChunkServerForChunk().getAddress());
-            WSRequest request = wsClient
-                    .url("http://" + x.getAddress() + "/chunkServer/initializeChunk?uuid=" + x.getId());
-            request.get().thenApply(WSResponse::asJson);
+            ChunkServer chunkServer = chooseChunkServerForChunk();
+            if (chunkServer != null) {
+                x.setAddress(chunkServer.getAddress());
+                WSRequest request = wsClient
+                        .url("http://" + x.getAddress() + "/chunkServer/initializeChunk?uuid=" + x.getId());
+                request.get().thenApply(WSResponse::asJson);
+            }
         });
         return redirect("http://localhost:9000/master/triggerPolling");
     }
 
     /**
      * Choose a chunkServer from the chunkServerList that we have on the master
+     *
      * @return Chosen RUNNING chunkServer
      */
     private ChunkServer chooseChunkServerForChunk() {
-        List<ChunkServer> runningChunkServers = chunkServerList
+        List<ChunkServer> runningChunkServers = chunkServerList // Running chunkServers only
                 .stream()
                 .filter(x -> x.getStatus().equals(ChunkServer.ChunkServerStatus.RUNNING))
                 .collect(Collectors.toList());
+        if (runningChunkServers.size() == 0) {
+            return null;
+        }
         return runningChunkServers.get(new Random().nextInt(runningChunkServers.size()));
     }
 
     /**
      * This API gets the chunk handles using the file name and returns a
      * response in the form of a JSON to the client.
+     *
      * @param filename Filename to get the chunk handles for
      * @return JSON string of the chunk handles and list of chunk servers,
      *          and other stuff required for the client to contact individual
@@ -155,6 +167,7 @@ public class Master extends Controller {
     /**
      * This API is not used by the client. This is here so that we can manually
      * register a chunkServer.
+     *
      * @param ip IP of the chunkServer to register
      * @param port Port number of the chunkServer to register
      * @return 200
@@ -169,17 +182,20 @@ public class Master extends Controller {
     }
 
     /**
-     * This API gets called when the user clicks on the new ChunkServer button
+     * This API is called when the user clicks on the New ChunkServer button
      * on the master dashboard. We start a new chunkServer from the next port
      * that is available. If this is the first chunkServer, then we start from
-     * 9001. This is recorded in a JSON file to keep track of the chunkServers.
+     * 9001. This is recorded in a JSON file to keep track of the chunkServer
+     * ports.
+     *
      * ChunkServer is started in the background and the chunkServerList is
-     * updated to account for the new chunkServer
+     * updated to account for the new chunkServer.
+     *
      * @return 200 if a new chunkServer is started
      *         400 if we try to select a port that already has a chunkServer
      *         running. This will not happen, unless we manually tamper with
      *         the ports file. Do not do this.
-     * @throws IOException
+     * @throws IOException, If we are unable to create a file
      */
     public Result registerNewChunkServer() throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(gfsPorts));
@@ -193,13 +209,12 @@ public class Master extends Controller {
             portNumber = 9001;
         } else {
             tempPortsArray = (ArrayNode) Json.parse(jsonString).get("ports");
-            // This will be our new chunkServer's port
             portNumber = tempPortsArray.get(tempPortsArray.size() - 1).asInt() + 1;
         }
         if (tempPortsArray != null) {
             tempPortsArray.forEach(portsArray::add);
         }
-        portsArray.add(portNumber);
+        portsArray.add(portNumber); // This will be our new chunkServer's port
         if(environment.isProd()) {
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(gfsPorts));
             bufferedWriter.write(objectNode.toString());
@@ -211,14 +226,17 @@ public class Master extends Controller {
             // We already have a chunkServer with this IP and port
             return badRequest("ChunkServer with IP: localhost and port: " + portNumber + " already exists");
         }
-        Runtime.getRuntime().exec(newChunkServerScript + portNumber);
+        Runtime.getRuntime().exec(newChunkServerScript + portNumber); // Start the chunkServer
+        // Register the new chunkServer with the master
         chunkServerList.add(new ChunkServer("localhost", String.valueOf(portNumber)));
         return ok();
     }
 
     /**
      * This API is called by the master to get the information about the
-     * chunkServers. This is done for each heartbeat message
+     * chunkServers. This is done for each heartbeat message. And also when the
+     * master dashboard is loaded.
+     *
      * @return JSON of chunkServers and its information
      */
     public Result getChunkServers() {
@@ -230,10 +248,11 @@ public class Master extends Controller {
 
     /**
      * This API is used to get information about a single chunkServer based on
-     * the ip and port specified
+     * the ip and the port specified.
+     *
      * @param ip IP of the chunkServer to get data
      * @param port Port number of the chunkServer to get data
-     * @return Information about the chunkServer
+     * @return Information about the chunkServer in JSON
      */
     public Result getChunkServer(String ip, String port) {
         return ok((JsonNode) mapper.valueToTree(chunkServerList
@@ -244,9 +263,10 @@ public class Master extends Controller {
     }
 
     /**
-     * This API is called by the files section on the dashboard. This will
-     * return the JSON of the files and the chunks
-     * @return
+     * This API is called by the files section on the master dashboard. This
+     * will return the JSON of the files and the chunks.
+     *
+     * @return metadata in JSON
      */
     public Result getFiles() {
         ObjectNode metadata = Json.newObject();
@@ -259,6 +279,7 @@ public class Master extends Controller {
      * This API is called by the chunkServer to stop a chunkServer. The
      * chunkServer calls this so that the master can update information about
      * this chunkServer. This is beyond the requirements!
+     *
      * @param ip IP of the chunkServer that is being stopped or dying
      * @param port Port number of the chunkServer that is being stopped or
      *             dying
@@ -268,13 +289,14 @@ public class Master extends Controller {
         chunkServerList
                 .stream()
                 .filter(x -> x.getIp().equals(ip) && x.getPort().equals(port))
-                .distinct() // TODO Ideally this should always be distinct and hence we remove the distinct clause
+                .distinct() // Ideally this should always be distinct
                 .forEach(x -> x.setStatus(ChunkServer.ChunkServerStatus.DEAD));
         return ok();
     }
 
     /**
-     * This API will update the chunks. Basically the metadata of the master
+     * This API will update the chunks. Basically the metadata of the master.
+     *
      * @return 200
      */
     public Result triggerPolling() {
@@ -292,7 +314,8 @@ public class Master extends Controller {
     }
 
     /**
-     * Render the beautiful GFS master dashboard
+     * Render the beautiful GFS master dashboard.
+     *
      * @return Dashboard html file
      */
     public Result dashboard() {

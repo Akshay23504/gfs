@@ -15,14 +15,14 @@ GET     /master/dashboard                  controllers.Master.dashboard()
 
 GET     /master/getChunkServers            controllers.Master.getChunkServers()
 GET     /master/getChunkServer             controllers.Master.getChunkServer(ip: String, port:String)
-GET     /master/getFiles                    controllers.Master.getFiles()
+GET     /master/getFiles                   controllers.Master.getFiles()
 GET     /master/getChunkHandlesForFile     controllers.Master.getChunkHandlesForFile(filename: String)
 GET     /master/chunkServerDead            controllers.Master.chunkServerDead(ip: String, port:String)
 
 # ChunkServer
 GET     /chunkServer/poll                  controllers.ChunkServer.poll()
 GET     /chunkServer/readChunk             controllers.ChunkServer.readChunk(uuid: String)
-GET     /chunkServer/initializeChunk        controllers.ChunkServer.initializeChunk(uuid: String)
+GET     /chunkServer/initializeChunk       controllers.ChunkServer.initializeChunk(uuid: String)
 POST    /chunkServer/writeChunk            controllers.ChunkServer.writeChunk()
 
 # Map static resources from the /public folder to the /assets URL path

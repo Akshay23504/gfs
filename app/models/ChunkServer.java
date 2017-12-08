@@ -3,6 +3,10 @@ package models;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Model class for the chunkServer.
+ * It also has the status of the chunkServer which the master will make use of.
+ */
 public class ChunkServer {
 
     public enum ChunkServerStatus {RUNNING, DEAD}

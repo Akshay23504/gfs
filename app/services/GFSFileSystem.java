@@ -16,6 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Model class which has entities like chunk size, list of gfs files etc.
+ */
 public class GFSFileSystem {
 
     public static final Integer chunkSizeBytes = 64;
@@ -33,6 +36,12 @@ public class GFSFileSystem {
         }
     }
 
+    /**
+     * Add the GFSFile to the json file for consistency and make it persistent.
+     *
+     * @param file GFSFile to add
+     * @throws IOException, If we are unable to open or write to a file
+     */
     public static void addFile(GFSFile file) throws IOException {
         GFSFiles = GFSFiles.stream().filter(x -> x.getName().equals(file.getName())).collect(Collectors.toList());
         GFSFiles.add(file);
@@ -44,6 +53,12 @@ public class GFSFileSystem {
         writer.close();
     }
 
+    /**
+     * This method returns the list of gfs files by reading the json from the
+     * json file and adds the appropriate chunkServer locations.
+     *
+     * @return A list of GFSFiles
+     */
     public static List<GFSFile> getFiles() {
         List<GFSFile> gfsFiles = new ArrayList<>();
         JsonNode jsonNode;
@@ -64,7 +79,5 @@ public class GFSFileSystem {
         });
         return GFSFiles;
     }
-
-
 
 }

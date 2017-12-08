@@ -11,7 +11,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
-// This creates an `ApplicationStart` object once at start-up.
+/**
+ * This is not used anymore.
+ * This was written initially so that the chunkServer can register
+ * automatically with the master when it starts up.
+ * We have a different and a better approach now.
+ *
+ * This creates an `ApplicationStart` object once at start-up.
+ */
 @Singleton
 public class ApplicationStart {
 

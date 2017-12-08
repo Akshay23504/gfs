@@ -7,7 +7,7 @@ import javax.inject.Inject;
 import java.io.File;
 
 /**
- * Service class that can have service methods needed by the chunkServer
+ * Service class that has service methods needed by the chunkServer.
  */
 public class ChunkServer {
 
@@ -21,7 +21,8 @@ public class ChunkServer {
     /**
      * Get the chunks path for a chunkServer.
      * This will also create directories if needed.
-     * @return
+     *
+     * @return the path
      */
     public String getChunksPath() {
         String port = System.getProperty("http.port");

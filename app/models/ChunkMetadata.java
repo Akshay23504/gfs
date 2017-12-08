@@ -1,7 +1,7 @@
 package models;
 
 /**
- * The model class that has the entities of the chunk metadata
+ * This model class has the entities of the chunk metadata
  */
 public class ChunkMetadata {
 
