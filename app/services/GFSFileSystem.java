@@ -43,7 +43,7 @@ public class GFSFileSystem {
      * @throws IOException, If we are unable to open or write to a file
      */
     public static void addFile(GFSFile file) throws IOException {
-        GFSFiles = GFSFiles.stream().filter(x -> x.getName().equals(file.getName())).collect(Collectors.toList());
+        GFSFiles = GFSFiles.stream().filter(x -> !x.getName().equals(file.getName())).collect(Collectors.toList());
         GFSFiles.add(file);
         ObjectNode files = Json.newObject();
         ArrayNode arrayNode = files.putArray("files");
