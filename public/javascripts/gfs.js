@@ -34,6 +34,8 @@ function getChunkServers() {
     });
 }
 
+// Call the getChunkServers method every 10 seconds and update data.
+// "Heartbeat messages"
 setInterval(getChunkServers, 10000);
 
 function newChunkServer() {
